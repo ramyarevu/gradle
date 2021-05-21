@@ -30,10 +30,10 @@ val artifactoryUrl
     get() = System.getenv("GRADLE_INTERNAL_REPO_URL") ?: ""
 
 val artifactoryUserName
-    get() = getBuildEnvironmentExtension()?.artifactoryUserName?.orNull
+    get() = getBuildEnvironmentExtension().artifactoryUserName.orNull
 
 val artifactoryUserPassword
-    get() = getBuildEnvironmentExtension()?.artifactoryPassword?.orNull
+    get() = getBuildEnvironmentExtension().artifactoryPassword.orNull
 
 publishing {
     publications {
