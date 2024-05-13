@@ -69,7 +69,23 @@
                 <td><literal>null</literal></td>
             </tr>
             <tr>
+                <td>enablePreview</td>
+                <td><literal>false</literal></td>
+            </tr>
+            <tr>
+                <td>javaModuleVersion</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>javaModuleMainClass</td>
+                <td></td>
+            </tr>
+            <tr>
                 <td>incremental</td>
+                <td><literal>true</literal></td>
+            </tr>
+            <tr>
+                <td>incrementalAfterFailure</td>
                 <td><literal>true</literal></td>
             </tr>
             <tr>
