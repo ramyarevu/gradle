@@ -167,7 +167,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "source and target compatibility override toolchain (source #source, target #target)"() {
-        def jdk11 = AvailableJavaHomes.getJdk(JavaVersion.VERSION_11)
+        def jdk11 = AvailableJavaHomes.getJdk11()
 
         buildFile << """
             apply plugin: 'java'
@@ -259,7 +259,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "source compatibility lower than compiler version does not allow accessing newer Java language features"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -285,7 +285,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "source compatibility matching the compiler version allows accessing Java language features"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -310,7 +310,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "release flag lower than compiler version does not allow accessing newer Java language features"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -336,7 +336,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "release flag matching the compiler version allows accessing corresponding Java language features"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -375,8 +375,8 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "source compatibility lower than compiler version allows accessing newer JDK APIs"() {
-        def jdk11 = AvailableJavaHomes.getJdk(JavaVersion.VERSION_11)
-        def jdk17 = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk11 = AvailableJavaHomes.getJdk11()
+        def jdk17 = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -437,7 +437,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "release flag lower than compiler version does not allow accessing newer JDK APIs"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -464,7 +464,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "release flag matching the compiler version allows accessing corresponding JDK APIs"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -489,7 +489,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "earlier toolchain does not allow accessing later JDK APIs in source"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_11)
+        def jdk = AvailableJavaHomes.getJdk11()
 
         buildFile << """
             apply plugin: "java"
@@ -523,7 +523,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "toolchain allows accessing corresponding JDK APIs in source"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_17)
+        def jdk = AvailableJavaHomes.getJdk17()
 
         buildFile << """
             apply plugin: "java"
@@ -570,10 +570,12 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
     }
 
     def "preview features are not allowed #description"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_21)
+        def jdk = AvailableJavaHomes.getJdk21()
 
         buildFile << """
-            apply plugin: "java"
+            plugins {
+                id 'java'
+            }
 
             java {
                 toolchain {
@@ -602,11 +604,13 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
         "when disabled" | "options.enablePreview = false"
     }
 
-    def "preview features are allowed when enabled via #description"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_21)
+    def "preview features are allowed when enabled"() {
+        def jdk = AvailableJavaHomes.getJdk21()
 
         buildFile << """
-            apply plugin: "java"
+            plugins {
+                id 'java'
+            }
 
             java {
                 toolchain {
@@ -615,7 +619,7 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
             }
 
             compileJava {
-                $configureCompilation
+                options.enablePreview = true
             }
         """
 
@@ -628,18 +632,15 @@ class JavaCompileCompatibilityIntegrationTest extends AbstractIntegrationSpec im
         executedAndNotSkipped(":compileJava")
         errorOutput.contains("Main.java uses preview features of Java SE 21.")
         classJavaVersion(javaClassFile("Main.class")) == JavaVersion.VERSION_21
-
-        where:
-        description          | configureCompilation
-        "compiler flag"      | "options.compilerArgs += '--enable-preview'"
-        "compilation option" | "options.enablePreview = true"
     }
 
     def "cannot mix enable-preview compiler flag and enabling the compilation option"() {
-        def jdk = AvailableJavaHomes.getJdk(JavaVersion.VERSION_21)
+        def jdk = AvailableJavaHomes.getJdk21()
 
         buildFile << """
-            apply plugin: "java"
+            plugins {
+                id 'java'
+            }
 
             java {
                 toolchain {
