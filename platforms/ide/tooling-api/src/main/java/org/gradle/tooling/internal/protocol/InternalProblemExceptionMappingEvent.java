@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.gradle.tooling.events.problems;
+package org.gradle.tooling.internal.protocol;
 
-import org.gradle.api.Incubating;
+import org.gradle.api.NonNullApi;
+import org.gradle.tooling.internal.protocol.events.InternalProgressEvent;
 
-/**
- * ProblemEvent with all the details relevant.
- *
- * @since 8.8
- */
-@Incubating
-public interface SingleProblemEvent extends ProblemEvent, ProblemDescription {
+import java.util.Collection;
+import java.util.Map;
 
+@NonNullApi
+public interface InternalProblemExceptionMappingEvent extends InternalProgressEvent {
+
+    Map<InternalFailure, Collection<InternalBasicProblemDetailsVersion3>> getProblemsForFailures();
 }

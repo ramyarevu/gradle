@@ -18,12 +18,22 @@ package org.gradle.tooling.events.problems;
 
 import org.gradle.api.Incubating;
 
+import java.util.Collection;
+import java.util.Map;
+
 /**
- * ProblemEvent with all the details relevant.
+ * An event containing a mapping of problems to failures.
  *
- * @since 8.8
+ * @since 8.9
  */
 @Incubating
-public interface SingleProblemEvent extends ProblemEvent, ProblemDescription {
+public interface ProblemExceptionMappingEvent extends ProblemEvent {
 
+    /**
+     * get the problems for failures
+     *
+     * @since 8.9
+     */
+    @Incubating
+    Map<FailureContainer, Collection<ProblemDescription>> getProblemsForFailures();
 }
