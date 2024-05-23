@@ -150,10 +150,11 @@ public abstract class GeneratePluginAdaptersTask extends DefaultTask {
 
     private void generateScriptPluginAdapter(PrecompiledGroovyScript scriptPlugin, String firstPassCode) {
         String targetClass = scriptPlugin.getTargetClassName();
-        File outputFile = getPluginAdapterSourcesOutputDirectory().file(scriptPlugin.getPluginAdapterClassName() + ".java").get().getAsFile();
+        File outputFile = getPluginAdapterSourcesOutputDirectory().file(scriptPlugin.getPluginAdapterFullClassName().replace(".", "/") + ".java").get().getAsFile();
 
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Paths.get(outputFile.toURI())))) {
             writer.println("//CHECKSTYLE:OFF");
+            writer.println("package " + scriptPlugin.getPluginAdapterPackage() + ";");
             writer.println("import org.gradle.util.GradleVersion;");
             writer.println("import org.gradle.groovy.scripts.BasicScript;");
             writer.println("import org.gradle.groovy.scripts.ScriptSource;");
@@ -162,8 +163,9 @@ public abstract class GeneratePluginAdaptersTask extends DefaultTask {
             writer.println("/**");
             writer.println(" * Precompiled " + scriptPlugin.getId() + " script plugin.");
             writer.println(" **/");
-            writer.println("public class " + scriptPlugin.getPluginAdapterClassName() + " implements org.gradle.api.Plugin<" + targetClass + "> {");
+            writer.println("public class " + scriptPlugin.getPluginAdapterSimpleClassName() + " implements org.gradle.api.Plugin<" + targetClass + "> {");
             writer.println("    private static final String MIN_SUPPORTED_GRADLE_VERSION = \"5.0\";");
+            writer.println("    @Override");
             writer.println("    public void apply(" + targetClass + " target) {");
             writer.println("        assertSupportedByCurrentGradleVersion();");
             writer.println("        try {");

@@ -34,17 +34,17 @@ class PrecompiledGroovyScriptTest extends Specification {
     def "creates valid java classname from script filename based plugin id"() {
         expect:
         def script = new PrecompiledGroovyScript(new File("/foo/bar/$filename"), loader)
-        script.pluginAdapterClassName == javaClass
+        script.pluginAdapterFullClassName == javaClass
 
         where:
         filename                               | javaClass
-        "foo.gradle"                           | "FooPlugin"
-        "foo.bar.gradle"                       | "FooBarPlugin"
-        "test-plugin.gradle"                   | "TestPluginPlugin"
-        "foo.bar.test-plugin.gradle"           | "FooBarTestPluginPlugin"
-        "foo.bar.-foo.gradle"                  | "FooBarFooPlugin"
-        "foo.bar._foo.gradle"                  | "FooBar_fooPlugin"
-        "123.gradle"                           | "_123Plugin"
-        "dev.gradleplugins.some-plugin.gradle" | "DevGradlepluginsSomePluginPlugin"
+        "foo.gradle"                           | "precompiled.FooPlugin"
+        "foo.bar.gradle"                       | "precompiled.FooBarPlugin"
+        "test-plugin.gradle"                   | "precompiled.TestPluginPlugin"
+        "foo.bar.test-plugin.gradle"           | "precompiled.FooBarTestPluginPlugin"
+        "foo.bar.-foo.gradle"                  | "precompiled.FooBarFooPlugin"
+        "foo.bar._foo.gradle"                  | "precompiled.FooBar_fooPlugin"
+        "123.gradle"                           | "precompiled._123Plugin"
+        "dev.gradleplugins.some-plugin.gradle" | "precompiled.DevGradlepluginsSomePluginPlugin"
     }
 }
