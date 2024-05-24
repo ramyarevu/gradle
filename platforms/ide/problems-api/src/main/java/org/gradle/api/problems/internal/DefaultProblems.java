@@ -17,6 +17,7 @@
 package org.gradle.api.problems.internal;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.gradle.api.problems.ProblemReporter;
@@ -24,6 +25,7 @@ import org.gradle.internal.operations.CurrentBuildOperationRef;
 import org.gradle.internal.service.scopes.Scope;
 import org.gradle.internal.service.scopes.ServiceScope;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +43,7 @@ public class DefaultProblems implements InternalProblems {
     public DefaultProblems(ProblemEmitter emitter, CurrentBuildOperationRef currentBuildOperationRef) {
         this(emitter, Collections.<ProblemTransformer>emptyList(), currentBuildOperationRef);
     }
+
     public DefaultProblems(ProblemEmitter emitter) {
         this(emitter, Collections.<ProblemTransformer>emptyList(), CurrentBuildOperationRef.instance());
     }
@@ -75,9 +78,22 @@ public class DefaultProblems implements InternalProblems {
     }
 
     @Override
-    public void reportMapping() {
-        if(!problemsForThrowables.isEmpty()) {
-            emitter.emit(problemsForThrowables.asMap(), currentBuildOperationRef.get().getId());
-        }
+    public void reportMapping(Throwable throwable) {
+        ImmutableMap.Builder<Throwable, Collection<Problem>> builder = ImmutableMap.builder();
+
+        // TODO: handle MultiCauseException
+
+        Throwable cause = throwable;
+        Throwable priorCause = null;
+        do {
+            Collection<Problem> problems = problemsForThrowables.get(cause);
+            if (!problems.isEmpty()) {
+                builder.put(cause, problems);
+            }
+            priorCause = cause;
+            cause = cause.getCause();
+        } while (cause != null && cause != priorCause);
+
+        emitter.emit(builder.build(), currentBuildOperationRef.get().getId());
     }
 }
