@@ -1,3 +1,20 @@
 {
-    "acceptedApiChanges": []
+    "acceptedApiChanges": [
+        {
+            "type": "org.gradle.api.tasks.wrapper.Wrapper",
+            "member": "Method org.gradle.api.tasks.wrapper.Wrapper.setJarFile(java.lang.Object)",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.tasks.wrapper.Wrapper",
+            "member": "Method org.gradle.api.tasks.wrapper.Wrapper.setScriptFile(java.lang.Object)",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        }
+    ]
 }
