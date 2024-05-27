@@ -107,7 +107,6 @@ public class DefaultFileWatcherProbeRegistry implements FileWatcherProbeRegistry
                 unwatchedHierarchies.add(hierarchy);
                 return getProbeForHierarchy(hierarchy.toPath());
             })
-            .filter(Objects::nonNull)
             .distinct()
             .forEach(probe -> {
                 if (!probe.hasWatchableHierarchies(unwatchedHierarchies)) {
@@ -121,7 +120,6 @@ public class DefaultFileWatcherProbeRegistry implements FileWatcherProbeRegistry
         hierarchies
             .map(File::toPath)
             .map(this::getProbeForHierarchy)
-            .filter(Objects::nonNull)
             .filter(x -> x.state == WatchProbeImpl.State.UNARMED)
             .distinct()
             .forEach(probe -> {
@@ -145,26 +143,38 @@ public class DefaultFileWatcherProbeRegistry implements FileWatcherProbeRegistry
      */
     @Override
     public void triggerWatchProbe(Path path) {
-        WatchProbeImpl probe = getProbeForHierarchy(path);
+        WatchProbeImpl probe = findProbeForHierarchy(path);
         if (probe != null) {
             LOGGER.debug("Triggering watch probe for {}", probe.getWatchableHierarchies(unwatchedHierarchies));
             probe.trigger();
         }
     }
 
-
-    // can be null if watchableHierarchy is moved
     @Nullable
-    private WatchProbeImpl getProbeForHierarchy(Path watchableHierarchy) {
+    private WatchProbeImpl findProbeForHierarchy(Path watchableHierarchy) {
         FileStore fileStore = getFileStore(watchableHierarchy);
-        WatchProbeImpl watchProbe;
         if (fileStore != null) {
-            watchProbe = probesByFS.get(fileStore);
-        } else {
-            watchProbe = watchProbesByHierarchy.get(watchableHierarchy);
+            WatchProbeImpl watchProbe = probesByFS.get(fileStore);
+            if (watchProbe != null) {
+                return watchProbe;
+            }
         }
+        return watchProbesByHierarchy.get(watchableHierarchy);
+    }
+
+    private WatchProbeImpl getProbeForHierarchy(Path watchableHierarchy) {
+        WatchProbeImpl watchProbe = findProbeForHierarchy(watchableHierarchy);
         if (watchProbe == null) {
-            LOGGER.debug("Did not find watchable hierarchy probe for: {}", watchableHierarchy);
+            watchProbe = probesByFS.values().stream()
+                .filter(probe -> probe.hasWatchableHierarchy(watchableHierarchy.toFile()))
+                .findFirst()
+                .map(probe -> {
+                    watchProbesByHierarchy.put(watchableHierarchy, probe);
+                    return probe;
+                })
+                .orElseThrow(() ->
+                    new IllegalArgumentException("Did not find watchable hierarchy probe for: " + watchableHierarchy)
+                );
         }
         return watchProbe;
     }
@@ -276,6 +286,10 @@ public class DefaultFileWatcherProbeRegistry implements FileWatcherProbeRegistry
 
         public void addWatchableHierarchy(File watchableHierarchy) {
             watchableHierarchies.add(watchableHierarchy);
+        }
+
+        public boolean hasWatchableHierarchy(File watchableHierarchy) {
+            return watchableHierarchies.contains(watchableHierarchy);
         }
 
         public boolean hasWatchableHierarchies(Set<File> unwatchedHierarchies) {
