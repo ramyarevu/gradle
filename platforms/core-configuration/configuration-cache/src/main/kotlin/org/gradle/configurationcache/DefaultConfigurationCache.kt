@@ -30,10 +30,7 @@ import org.gradle.configurationcache.initialization.ConfigurationCacheStartParam
 import org.gradle.configurationcache.metadata.ProjectMetadataController
 import org.gradle.configurationcache.models.IntermediateModelController
 import org.gradle.configurationcache.problems.ConfigurationCacheProblems
-import org.gradle.internal.serialize.graph.DefaultWriteContext
 import org.gradle.configurationcache.serialization.IsolateOwners
-import org.gradle.internal.serialize.graph.ReadContext
-import org.gradle.internal.serialize.graph.withIsolate
 import org.gradle.initialization.GradlePropertiesController
 import org.gradle.internal.Factory
 import org.gradle.internal.build.BuildStateRegistry
@@ -46,8 +43,10 @@ import org.gradle.internal.concurrent.Stoppable
 import org.gradle.internal.configuration.inputs.InstrumentedInputs
 import org.gradle.internal.model.CalculatedValueContainerFactory
 import org.gradle.internal.operations.BuildOperationRunner
+import org.gradle.internal.serialize.graph.DefaultWriteContext
+import org.gradle.internal.serialize.graph.ReadContext
+import org.gradle.internal.serialize.graph.withIsolate
 import org.gradle.internal.vfs.FileSystemAccess
-import org.gradle.internal.watch.vfs.BuildLifecycleAwareVirtualFileSystem
 import org.gradle.tooling.provider.model.internal.ToolingModelParameterCarrier
 import org.gradle.util.Path
 import java.io.File
@@ -64,7 +63,6 @@ class DefaultConfigurationCache internal constructor(
     private val configurationTimeBarrier: ConfigurationTimeBarrier,
     private val buildActionModelRequirements: BuildActionModelRequirements,
     private val buildStateRegistry: BuildStateRegistry,
-    private val virtualFileSystem: BuildLifecycleAwareVirtualFileSystem,
     private val buildOperationRunner: BuildOperationRunner,
     private val cacheFingerprintController: ConfigurationCacheFingerprintController,
     private val encryptionService: EncryptionService,
@@ -495,11 +493,6 @@ class DefaultConfigurationCache internal constructor(
 
     private
     fun checkFingerprint(entryDetails: EntryDetails, layout: ConfigurationCacheRepository.Layout): CheckedFingerprint {
-        // Register all included build root directories as watchable hierarchies,
-        // so we can load the fingerprint for build scripts and other files from included builds
-        // without violating file system invariants.
-        registerWatchableBuildDirectories(entryDetails.rootDirs)
-
         loadGradleProperties()
 
         return checkFingerprintAgainstLoadedProperties(entryDetails, layout).also { result ->
@@ -562,11 +555,6 @@ class DefaultConfigurationCache internal constructor(
                 }
             }
         }
-
-    private
-    fun registerWatchableBuildDirectories(buildDirs: Iterable<File>) {
-        buildDirs.forEach { dir -> virtualFileSystem.registerWatchableHierarchy(dir, null) }
-    }
 
     private
     fun loadGradleProperties() {

@@ -69,7 +69,6 @@ dependencies {
     // TODO - it might be good to allow projects to contribute state to save and restore, rather than have this project know about everything
     implementation(project(":build-events"))
     implementation(project(":execution"))
-    implementation(project(":file-watching"))
     implementation(project(":input-tracking"))
     implementation(projects.javaLanguageExtensionsKt)
     implementation(project(":platform-jvm"))
