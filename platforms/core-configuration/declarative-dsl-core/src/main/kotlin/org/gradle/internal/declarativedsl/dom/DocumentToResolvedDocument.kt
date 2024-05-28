@@ -102,7 +102,7 @@ class DocumentResolver(
                         )
                     }
 
-                    else -> error("Unexpected semantics of element ${function.format(functionOrigin)}: ${semantics::class.simpleName}")
+                    else -> error("unexpected semantics of element ${function.format(functionOrigin)}: ${semantics::class.simpleName}")
                 }
             }
 

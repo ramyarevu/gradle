@@ -1,8 +1,8 @@
 package org.gradle.internal.declarativedsl.objectGraph
 
-import org.gradle.internal.declarativedsl.analysis.OperationGenerationId
 import org.gradle.internal.declarativedsl.analysis.AssignmentMethod
 import org.gradle.internal.declarativedsl.analysis.ObjectOrigin
+import org.gradle.internal.declarativedsl.analysis.OperationGenerationId
 import org.gradle.internal.declarativedsl.analysis.PropertyReferenceResolution
 import org.gradle.internal.declarativedsl.objectGraph.AssignmentResolver.ExpressionResolutionProgress.Ok
 import org.gradle.internal.declarativedsl.objectGraph.AssignmentResolver.ExpressionResolutionProgress.UnresolvedReceiver
@@ -67,7 +67,7 @@ class AssignmentResolver() {
                         } else {
                             // We should never come across a situation where an assignment already exists that is in a higher generation,
                             // but if we do, just pull the emergency stop handle as this is indicative of a bug rather than a user error.
-                            error("Unexpected assignment in higher generation")
+                            error("unexpected assignment in higher generation")
                         }
                     }
 

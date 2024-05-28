@@ -59,7 +59,7 @@ data class ProcessedConventions(
  */
 private
 fun getSoftwareType(objectOrigin: ObjectOrigin): ObjectOrigin.AccessAndConfigureReceiver =
-    findSoftwareType(objectOrigin) ?: error("Could not discover softwareType for $objectOrigin")
+    findSoftwareType(objectOrigin) ?: error("could not discover softwareType for $objectOrigin")
 
 
 /**

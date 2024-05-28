@@ -170,7 +170,7 @@ class DefaultDeclarativeKotlinScriptEvaluator(
 
     private
     fun languageModelFromLightParser(scriptSource: ScriptSource): LanguageTreeResult {
-        val parsedTree = parse(scriptSource.resource.text)
+        val parsedTree = parse(scriptSource.resource.text, scriptSource.fileName)
         return languageTreeBuilder.build(parsedTree, SourceIdentifier(scriptSource.fileName))
     }
 
