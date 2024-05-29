@@ -59,7 +59,7 @@ class CompositeEvaluationSchemaComponent(
     internal val components: List<EvaluationSchemaComponent>
 ) : EvaluationSchemaComponent {
     init {
-        components.forEach { check(it !is CompositeEvaluationSchemaComponent) { "Composite schema components are not allowed to be nested" } }
+        components.forEach { check(it !is CompositeEvaluationSchemaComponent) { "composite schema components are not allowed to be nested" } }
     }
 
     override fun typeDiscovery(): List<TypeDiscovery> = components.flatMap(EvaluationSchemaComponent::typeDiscovery)
