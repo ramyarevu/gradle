@@ -390,12 +390,12 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec impleme
         possibleFileLocations.put(fooFileLocation, 2)
 
         when:
-        executer.withArguments("--info", "--stacktrace")
+        executer.withArguments("--info")
         withInstallations(AvailableJavaHomes.getJdk(JavaVersion.VERSION_1_8))
         succeeds(":compileJava")
 
         then:
-        result.error.contains(DiagnosticToProblemListener.FORMATTER_FALLBACK_MESSAGE)
+        result.assertOutputContains(DiagnosticToProblemListener.FORMATTER_FALLBACK_MESSAGE)
         verifyAll(receivedProblem(0)) {
             assertProblem(it, "WARNING", true)
             fqid == 'compilation:java:java-compilation-warning'
