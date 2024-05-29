@@ -16,6 +16,8 @@
 
 package org.gradle.api.services
 
+import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.api.artifacts.transform.TransformAction
 import org.gradle.api.artifacts.transform.TransformOutputs
 import org.gradle.api.artifacts.transform.TransformParameters
@@ -23,6 +25,8 @@ import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.internal.AbstractTask
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.services.internal.BuildServiceProvider
 import org.gradle.api.tasks.Input
@@ -36,14 +40,19 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectories
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
+import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.ToBeFixedForConfigurationCache
 import org.gradle.integtests.fixtures.ToBeFixedForIsolatedProjects
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.process.ExecOperations
+import org.gradle.test.fixtures.dsl.GradleDsl
 import org.gradle.test.fixtures.file.TestFile
+import org.gradle.test.fixtures.plugin.PluginBuilder
 import org.gradle.test.precondition.Requires
 import org.gradle.test.preconditions.IntegTestPreconditions
+import org.gradle.tooling.events.FinishEvent
+import org.gradle.tooling.events.OperationCompletionListener
 import org.gradle.util.internal.ToBeImplemented
 import spock.lang.Issue
 
@@ -1565,6 +1574,98 @@ Hello, subproject1
         succeeds("hello")
         outputContains("Hello, World")
         outputContains("Resolving provider")
+    }
+
+    def "can isolate parameters"() {
+        given:
+        def pluginBuilder = new PluginBuilder(createDir("service-plugin")).tap {
+            addPluginId("com.example.servicePlugin", "ServicePlugin")
+
+            java("ServicePlugin.java") << """
+                package $packageName;
+
+                import ${BuildEventsListenerRegistry.name};
+                import ${BuildService.name};
+                import ${BuildServiceParameters.name};
+                import ${BuildServiceRegistry.name};
+                import ${FinishEvent.name};
+                import ${Inject.name};
+                import ${OperationCompletionListener.name};
+                import ${Plugin.name};
+                import ${Project.name};
+                import ${Property.name};
+                import ${Provider.name};
+
+                public abstract class ServicePlugin implements Plugin<Project> {
+                    interface Params extends BuildServiceParameters {
+                        Property<Integer> getIntValue();
+                        Property<String> getProjectName();
+                    }
+
+                    public abstract static class MyService implements BuildService<Params>, OperationCompletionListener {
+                        @Override public void onFinish(FinishEvent event) {
+                            System.out.println("PROJECT=" + getParameters().getProjectName().get() + " finish event=" + event);
+                        }
+                    }
+
+                    @Inject protected abstract BuildEventsListenerRegistry getRegistry();
+
+                    @Inject protected abstract BuildServiceRegistry getSharedServices();
+
+                    @Override
+                    public void apply(Project project) {
+                        Provider<MyService> sp = getSharedServices().registerIfAbsent("myService", MyService.class, spec -> {
+                            spec.getParameters().getProjectName().set(project.getName());
+                        });
+
+                        getRegistry().onTaskCompletion(sp);
+                    }
+                }
+            """
+        }
+
+        def pluginRepo = maven(createDir("pluginRepo"))
+        def pluginCoordinates = "com.example:service-plugin:1.0"
+        pluginBuilder.publishAs(pluginCoordinates, pluginRepo, executer)
+
+        createDir("buildSrc") {
+            file("build.gradle.kts") << """
+                plugins {
+                    `kotlin-dsl`
+                }
+
+                repositories {
+                    maven {
+                        url = uri("${pluginRepo.uri.toASCIIString()}")
+                    }
+                    ${mavenCentralRepository(GradleDsl.KOTLIN)}
+                }
+
+                dependencies {
+                    implementation("$pluginCoordinates")
+                }
+            """
+
+            file("src/main/kotlin/convention_plugin.gradle.kts") << """
+                plugins {
+                    id("com.example.servicePlugin")
+                }
+            """
+        }
+
+        buildScript("""
+            plugins {
+                id("convention_plugin")
+            }
+
+            tasks.register("hello") {
+                doLast {
+                    println("Hello!")
+                }
+            }
+        """)
+        expect:
+        succeeds("hello", "-S")
     }
 
     private void enableStableConfigurationCache() {
