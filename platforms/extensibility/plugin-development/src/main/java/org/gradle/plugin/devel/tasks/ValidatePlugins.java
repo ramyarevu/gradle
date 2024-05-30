@@ -21,8 +21,6 @@ import org.gradle.api.Incubating;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.DocumentationRegistry;
-import org.gradle.api.problems.internal.InternalProblemReporter;
-import org.gradle.api.problems.internal.InternalProblems;
 import org.gradle.api.problems.internal.Problem;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.CacheableTask;
@@ -44,11 +42,13 @@ import org.gradle.jvm.toolchain.JavaLauncher;
 import org.gradle.jvm.toolchain.JavaToolchainService;
 import org.gradle.plugin.devel.tasks.internal.ValidateAction;
 import org.gradle.plugin.devel.tasks.internal.ValidationProblemSerialization;
+import org.gradle.plugin.devel.tasks.internal.ValidationProblemTracker;
 import org.gradle.workers.WorkerExecutor;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -109,7 +109,8 @@ public abstract class ValidatePlugins extends DefaultTask {
             });
         getWorkerExecutor().await();
 
-        List<? extends Problem> problems = ValidationProblemSerialization.parseMessageList(new String(Files.readAllBytes(getOutputFile().get().getAsFile().toPath())));
+        Long operationId = Long.valueOf(new String(Files.readAllBytes(getOutputFile().get().getAsFile().toPath())));
+        List<? extends Problem> problems = new ArrayList<>(ValidationProblemTracker.problems.get(operationId));
 
         Stream<String> messages = ValidationProblemSerialization.toPlainMessage(problems).sorted();
         if (problems.isEmpty()) {
@@ -121,7 +122,6 @@ public abstract class ValidatePlugins extends DefaultTask {
                         annotateTaskPropertiesDoc(),
                         messages.collect(joining()));
                 } else {
-                    reportProblems(problems);
                     throw WorkValidationException.forProblems(messages.collect(toImmutableList()))
                         .withSummaryForPlugin()
                         .getWithExplanation(annotateTaskPropertiesDoc());
@@ -131,11 +131,6 @@ public abstract class ValidatePlugins extends DefaultTask {
                     messages.collect(joining()));
             }
         }
-    }
-
-    private void reportProblems(List<? extends Problem> problems) {
-        InternalProblemReporter reporter = getServices().get(InternalProblems.class).getInternalReporter();
-        problems.forEach(reporter::report);
     }
 
     private String annotateTaskPropertiesDoc() {
