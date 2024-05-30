@@ -48,7 +48,6 @@ import org.gradle.internal.reflect.Instantiator
 import org.gradle.process.ExecOperations
 import org.gradle.test.fixtures.dsl.GradleDsl
 import org.gradle.test.fixtures.file.TestFile
-import org.gradle.test.fixtures.plugin.PluginBuilder
 import org.gradle.test.precondition.Requires
 import org.gradle.test.preconditions.IntegTestPreconditions
 import org.gradle.tooling.events.FinishEvent
@@ -1578,11 +1577,27 @@ Hello, subproject1
 
     def "can isolate parameters"() {
         given:
-        def pluginBuilder = new PluginBuilder(createDir("service-plugin")).tap {
-            addPluginId("com.example.servicePlugin", "ServicePlugin")
+        createDir("plugins") {
+            file("settings.gradle.kts") << """
+                include("service-plugin")
+                include("convention-plugin")
+            """
+            file("service-plugin/build.gradle.kts") << """
+                plugins {
+                    id("java-gradle-plugin")
+                }
+                gradlePlugin {
+                    plugins {
+                        create("simplePlugin") {
+                            id = "com.example.servicePlugin"
+                            implementationClass = "com.example.ServicePlugin"
+                        }
+                    }
+                }
+            """
 
-            java("ServicePlugin.java") << """
-                package $packageName;
+            file("service-plugin/src/main/java/com/example/ServicePlugin.java") << """
+                package com.example;
 
                 import ${BuildEventsListenerRegistry.name};
                 import ${BuildService.name};
@@ -1622,36 +1637,29 @@ Hello, subproject1
                     }
                 }
             """
-        }
 
-        def pluginRepo = maven(createDir("pluginRepo"))
-        def pluginCoordinates = "com.example:service-plugin:1.0"
-        pluginBuilder.publishAs(pluginCoordinates, pluginRepo, executer)
-
-        createDir("buildSrc") {
-            file("build.gradle.kts") << """
+            file("convention-plugin/build.gradle.kts") << """
                 plugins {
                     `kotlin-dsl`
                 }
 
                 repositories {
-                    maven {
-                        url = uri("${pluginRepo.uri.toASCIIString()}")
-                    }
                     ${mavenCentralRepository(GradleDsl.KOTLIN)}
                 }
 
                 dependencies {
-                    implementation("$pluginCoordinates")
+                    implementation(project(":service-plugin"))
                 }
             """
 
-            file("src/main/kotlin/convention_plugin.gradle.kts") << """
+
+            file("convention-plugin/src/main/kotlin/convention_plugin.gradle.kts") << """
                 plugins {
                     id("com.example.servicePlugin")
                 }
             """
         }
+
 
         buildScript("""
             plugins {
@@ -1663,6 +1671,9 @@ Hello, subproject1
                     println("Hello!")
                 }
             }
+        """)
+        settingsScript("""
+            includeBuild("plugins")
         """)
         expect:
         succeeds("hello", "-S")
