@@ -38,7 +38,7 @@ public class BuildEventServices extends AbstractGradleModuleServices {
     }
 
     @Override
-    public void registerBuildTreeServices(ServiceRegistration registration) {
+    public void registerBuildServices(ServiceRegistration registration) {
         registration.add(BuildEventListenerRegistryInternal.class, DefaultBuildEventsListenerRegistry.class);
     }
 }

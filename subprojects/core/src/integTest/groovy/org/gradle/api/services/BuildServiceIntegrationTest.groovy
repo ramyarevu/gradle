@@ -1614,26 +1614,21 @@ Hello, subproject1
                 public abstract class ServicePlugin implements Plugin<Project> {
                     interface Params extends BuildServiceParameters {
                         Property<Integer> getIntValue();
-                        Property<String> getProjectName();
                     }
 
                     public abstract static class MyService implements BuildService<Params>, OperationCompletionListener {
-                        @Override public void onFinish(FinishEvent event) {
-                            System.out.println("PROJECT=" + getParameters().getProjectName().get() + " finish event=" + event);
-                        }
+                        @Override public void onFinish(FinishEvent event) {}
                     }
 
-                    @Inject protected abstract BuildEventsListenerRegistry getRegistry();
+                    @Inject protected abstract BuildEventsListenerRegistry getListenerRegistry();
 
                     @Inject protected abstract BuildServiceRegistry getSharedServices();
 
                     @Override
                     public void apply(Project project) {
-                        Provider<MyService> sp = getSharedServices().registerIfAbsent("myService", MyService.class, spec -> {
-                            spec.getParameters().getProjectName().set(project.getName());
-                        });
+                        Provider<MyService> sp = getSharedServices().registerIfAbsent("myService", MyService.class);
 
-                        getRegistry().onTaskCompletion(sp);
+                        getListenerRegistry().onTaskCompletion(sp);
                     }
                 }
             """

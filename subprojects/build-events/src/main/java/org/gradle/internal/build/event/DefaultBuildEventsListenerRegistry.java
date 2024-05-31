@@ -19,7 +19,6 @@ package org.gradle.internal.build.event;
 import com.google.common.collect.ImmutableList;
 import org.gradle.BuildAdapter;
 import org.gradle.BuildResult;
-import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.provider.ProviderInternal;
 import org.gradle.api.internal.provider.Providers;
 import org.gradle.api.provider.Provider;
@@ -267,11 +266,6 @@ public class DefaultBuildEventsListenerRegistry implements BuildEventsListenerRe
         @SuppressWarnings("deprecation")
         @Override
         public void buildFinished(BuildResult result) {
-            // TODO - maybe make the registry a build scoped service
-            if (!((GradleInternal) result.getGradle()).isRootBuild()) {
-                // Stop only when the root build completes
-                return;
-            }
             unsubscribeAll();
         }
     }
