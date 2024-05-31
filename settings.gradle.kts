@@ -284,6 +284,7 @@ testing {
     subproject("internal-testing")
     subproject("performance")
     subproject("precondition-tester")
+    subproject("public-api-tests")
     subproject("soak")
     subproject("smoke-ide-test") // eventually should be owned by IDEX team
     subproject("smoke-test")
