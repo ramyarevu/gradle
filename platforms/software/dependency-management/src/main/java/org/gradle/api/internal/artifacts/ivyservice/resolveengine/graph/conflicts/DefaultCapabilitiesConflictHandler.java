@@ -39,6 +39,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DefaultCapabilitiesConflictHandler implements CapabilitiesConflictHandler {
     private final List<Resolver> resolvers;
@@ -116,7 +117,21 @@ public class DefaultCapabilitiesConflictHandler implements CapabilitiesConflictH
     @Override
     public void resolveNextConflict(Action<ConflictResolutionResult> resolutionAction) {
         CapabilityConflict conflict = conflicts.poll();
-        // TODO: Ensure >= 2 nodes in this conflict are still selected
+
+        List<NodeState> selectedConflictingNodes =
+            conflict.nodes.stream().filter(NodeState::isSelected).collect(Collectors.toList());
+
+        if (selectedConflictingNodes.isEmpty()) {
+            return;
+        } else if (selectedConflictingNodes.size() < conflict.nodes.size()) {
+            // We remove any nodes that are not selected from the conflict-to-resolve.
+            conflict = new CapabilityConflict(
+                conflict.group,
+                conflict.name,
+                selectedConflictingNodes
+            );
+        }
+
         Details details = new Details(conflict);
         for (Resolver resolver : resolvers) {
             resolver.resolve(details);
@@ -272,10 +287,15 @@ public class DefaultCapabilitiesConflictHandler implements CapabilitiesConflictH
 
     private static class CapabilityConflict {
 
+        private final String group;
+        private final String name;
+
         private final Collection<NodeState> nodes;
         private final Set<Capability> descriptors;
 
         private CapabilityConflict(String group, String name, Collection<NodeState> nodes) {
+            this.group = group;
+            this.name = name;
             this.nodes = nodes;
             final ImmutableSet.Builder<Capability> builder = new ImmutableSet.Builder<>();
             for (final NodeState node : nodes) {
