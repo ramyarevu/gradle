@@ -256,8 +256,7 @@ class ConfigurationCacheState(
             write(gradle.settings.settingsScript.resource.location.file)
             writeBuildTreeScopedState(gradle)
         }
-        val buildEventListeners = buildEventListenersOf(gradle)
-        writeBuildsInTree(rootBuild, buildEventListeners)
+        writeBuildsInTree(rootBuild)
     }
 
     private
@@ -270,8 +269,8 @@ class ConfigurationCacheState(
     }
 
     private
-    suspend fun DefaultWriteContext.writeBuildsInTree(rootBuild: VintageGradleBuild, buildEventListeners: List<RegisteredBuildServiceProvider<*, *>>) {
-        val requiredBuildServicesPerBuild = buildEventListeners.groupBy { it.buildIdentifier }
+    suspend fun DefaultWriteContext.writeBuildsInTree(rootBuild: VintageGradleBuild) {
+        val requiredBuildServicesPerBuild = mutableMapOf<BuildIdentifier, List<RegisteredBuildServiceProvider<*, *>>>()
         val builds = mutableMapOf<BuildState, BuildToStore>()
         host.visitBuilds { build ->
             val state = build.state
@@ -280,6 +279,7 @@ class ConfigurationCacheState(
                 // Also require the owner of a buildSrc build
                 builds[state.owner] = builds.getValue(state.owner).hasChildren()
             }
+            requiredBuildServicesPerBuild[state.buildIdentifier] = buildEventListenersOf(build.gradle)
         }
         writeCollection(builds.values) { build ->
             writeBuildState(
