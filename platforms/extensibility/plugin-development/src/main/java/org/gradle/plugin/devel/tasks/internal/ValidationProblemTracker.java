@@ -17,6 +17,7 @@
 package org.gradle.plugin.devel.tasks.internal;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import org.gradle.api.Incubating;
 import org.gradle.api.problems.ProblemGroup;
@@ -26,20 +27,17 @@ import org.gradle.api.problems.internal.Problem;
 import org.gradle.api.problems.internal.ProblemTransformer;
 import org.gradle.internal.operations.OperationIdentifier;
 
+import java.util.Collection;
+
 /**
- * Tracks validation reports.
+ * Tracks validation issues reported via the Problems API.
  *
  * @since 8.9
  */
 @Incubating
 public class ValidationProblemTracker implements ProblemTransformer {
-    /**
-     * The collected problems.
-     *
-     * @since 8.9
-     */
-    @Incubating
-    public static Multimap<Long, Problem> problems = ArrayListMultimap.create();
+
+    private static Multimap<Long, Problem> problems = ArrayListMultimap.create();
 
     /**
      * Creates a new instance.
@@ -68,4 +66,14 @@ public class ValidationProblemTracker implements ProblemTransformer {
         return false;
     }
 
+    /**
+     * Returns all validation problems that were reported for the given operation.
+     *
+     * @param operationId The operation identifier
+     * @since 8.9
+     */
+    @Incubating
+    public static Collection<Problem> problemsReportedInOperation(long operationId) {
+        return ImmutableList.copyOf(problems.get(operationId));
+    }
 }

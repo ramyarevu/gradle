@@ -38,10 +38,10 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.internal.deprecation.DeprecationLogger;
 import org.gradle.internal.execution.WorkValidationException;
 import org.gradle.internal.jvm.Jvm;
+import org.gradle.internal.reflect.validation.TypeValidationProblemRenderer;
 import org.gradle.jvm.toolchain.JavaLauncher;
 import org.gradle.jvm.toolchain.JavaToolchainService;
 import org.gradle.plugin.devel.tasks.internal.ValidateAction;
-import org.gradle.plugin.devel.tasks.internal.ValidationProblemSerialization;
 import org.gradle.plugin.devel.tasks.internal.ValidationProblemTracker;
 import org.gradle.workers.WorkerExecutor;
 
@@ -112,7 +112,7 @@ public abstract class ValidatePlugins extends DefaultTask {
         Long operationId = Long.valueOf(new String(Files.readAllBytes(getOutputFile().get().getAsFile().toPath())));
         List<? extends Problem> problems = new ArrayList<>(ValidationProblemTracker.problemsReportedInOperation(operationId));
 
-        Stream<String> messages = ValidationProblemSerialization.toPlainMessage(problems).sorted();
+        Stream<String> messages = toPlainMessage(problems).sorted();
         if (problems.isEmpty()) {
             getLogger().info("Plugin validation finished without warnings.");
         } else {
@@ -131,6 +131,11 @@ public abstract class ValidatePlugins extends DefaultTask {
                     messages.collect(joining()));
             }
         }
+    }
+
+    private static Stream<String> toPlainMessage(List<? extends Problem> problems) {
+        return problems.stream()
+            .map(problem -> problem.getDefinition().getSeverity() + ": " + TypeValidationProblemRenderer.renderMinimalInformationAbout(problem));
     }
 
     private String annotateTaskPropertiesDoc() {

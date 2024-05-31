@@ -19,7 +19,7 @@ package org.gradle.plugin.devel.tasks
 import groovy.transform.CompileStatic
 import org.gradle.api.problems.Severity
 import org.gradle.internal.reflect.validation.TypeValidationProblemRenderer
-import org.gradle.plugin.devel.tasks.internal.ValidationProblemSerialization
+import org.gradle.plugin.devel.tasks.internal.ValidationProblemTracker
 
 @CompileStatic
 class TaskValidationReportFixture {
@@ -37,8 +37,9 @@ class TaskValidationReportFixture {
             }
             .join(PROBLEM_SEPARATOR)
             .replaceAll("\n+", "\n")
+        def operationId = Long.valueOf(reportFile.text)
         def reportText =
-            ValidationProblemSerialization.parseMessageList(reportFile.text)
+            ValidationProblemTracker.problemsReportedInOperation(operationId)
                 .collect { it.definition.severity.toString() + ": " + TypeValidationProblemRenderer.renderMinimalInformationAbout(it) }
                 .sort()
                 .join(PROBLEM_SEPARATOR)
