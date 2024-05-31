@@ -110,7 +110,7 @@ public abstract class ValidatePlugins extends DefaultTask {
         getWorkerExecutor().await();
 
         Long operationId = Long.valueOf(new String(Files.readAllBytes(getOutputFile().get().getAsFile().toPath())));
-        List<? extends Problem> problems = new ArrayList<>(ValidationProblemTracker.problems.get(operationId));
+        List<? extends Problem> problems = new ArrayList<>(ValidationProblemTracker.problemsReportedInOperation(operationId));
 
         Stream<String> messages = ValidationProblemSerialization.toPlainMessage(problems).sorted();
         if (problems.isEmpty()) {
