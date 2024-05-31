@@ -49,11 +49,14 @@ public class ValidationProblemTracker implements ProblemTransformer {
 
     @Override
     public Problem transform(Problem problem, OperationIdentifier id) {
+        System.err.println("Problem tracked: " + problem.getDefinition().getId().getGroup().getName() + ":" + problem.getDefinition().getId().getName() + " with opid " + id.getId());
         if (problemInGroup(problem.getDefinition().getId(), GradleCoreProblemGroup.validation())) {
             problems.put(id.getId(), problem);
         }
         return problem;
     }
+
+
 
     private static boolean problemInGroup(ProblemId id, ProblemGroup group) {
         ProblemGroup candidateGroup = id.getGroup();
