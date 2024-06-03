@@ -21,13 +21,14 @@ import org.gradle.api.Project
 import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.invocation.Gradle
-import org.gradle.api.plugins.ExtraPropertiesExtension
-import org.gradle.configurationcache.extensions.uncheckedCast
+import org.gradle.internal.extensions.core.popSingletonProperty
+import org.gradle.internal.extensions.core.setSingletonProperty
 import org.gradle.configurationcache.isolation.IsolatedActionDeserializer
 import org.gradle.configurationcache.isolation.IsolatedActionSerializer
 import org.gradle.configurationcache.isolation.SerializedIsolatedActionGraph
-import org.gradle.configurationcache.serialization.IsolateOwner
-import org.gradle.configurationcache.serialization.serviceOf
+import org.gradle.internal.serialize.graph.IsolateOwner
+import org.gradle.configurationcache.serialization.IsolateOwners
+import org.gradle.internal.serialize.graph.serviceOf
 import org.gradle.internal.code.UserCodeApplicationContext
 import org.gradle.invocation.IsolatedProjectEvaluationListenerProvider
 
@@ -76,7 +77,7 @@ class DefaultIsolatedProjectEvaluationListenerProvider(
         else -> {
             val isolate = isolate(
                 IsolatedProjectActions(beforeProject, afterProject),
-                IsolateOwner.OwnerGradle(gradle)
+                IsolateOwners.OwnerGradle(gradle)
             )
             clear()
             IsolatedProjectEvaluationListener(gradle, isolate)
@@ -131,31 +132,8 @@ class IsolatedProjectEvaluationListener(
     }
 
     private
-    fun isolatedActions() = IsolateOwner.OwnerGradle(gradle).let { owner ->
+    fun isolatedActions() = IsolateOwners.OwnerGradle(gradle).let { owner ->
         IsolatedActionDeserializer(owner, owner.serviceOf(), owner.serviceOf())
             .deserialize(isolated)
     }
 }
-
-
-private
-inline fun <reified T : Any> Project.setSingletonProperty(value: T) {
-    extra[T::class.java.name] = value
-}
-
-
-private
-inline fun <reified T> Project.popSingletonProperty(): T? {
-    val key = T::class.java.name
-    val extra = extra
-    val value = extra[key]
-    return value?.run {
-        extra[key] = null
-        uncheckedCast()
-    }
-}
-
-
-private
-val Project.extra: ExtraPropertiesExtension
-    get() = extensions.extraProperties
